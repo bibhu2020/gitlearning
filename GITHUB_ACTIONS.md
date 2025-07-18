@@ -3,7 +3,7 @@ Github action triggers with an Event. An Event could be a Pull Request, Push, Is
 Events are tied to Workflow and Workflow has a following typical structure:
 
 **Workflow**
-```
+```md
 🔁 Workflow: `.github/workflows/your-workflow.yml`
 ├── name: "CI/CD Pipeline"                         # Optional name of the workflow
 ├── on:                                            # Triggering events
@@ -15,27 +15,29 @@ Events are tied to Workflow and Workflow has a following typical structure:
 │   └── run:
 │       shell: bash
 │
-├── 🧩 Job1  → Runs on 🖥️ ubuntu-latest (Runner1)
-│   ├── name: "Install & Build"
-│   ├── runs-on: ubuntu-latest
-│   ├── needs: []                                  # Depends on other jobs (optional)
-│   ├── if: github.ref == 'refs/heads/main'        # Job-level conditional (optional)
-│   └── steps:
-│       ├── ⚙️ Step1: uses: actions/checkout@v4
-│       ├── ⚙️ Step2: uses: actions/setup-node@v4
-│       ├── 🖊️ Step3: run: npm ci
-│       └── 🖊️ Step4: run: npm run build
-│
-└── 🧩 Job2  → Runs on 🖥️ ubuntu-latest (Runner2)
-    ├── name: "Test & Deploy"
-    ├── runs-on: ubuntu-latest
-    ├── needs: Job1                                 # This job runs only after Job1
-    └── steps:
-        ├── 🖊️ Step1: run: npm test
-        ├── ⚙️ Step2: uses: actions/upload-artifact@v4
-        ├── 🖊️ Step3: run: echo "Deploying..."
-        └── ⚙️ Step4: uses: some/custom-action@v1
+└── jobs:                                          # All jobs go under this key
+    ├── 🧩 job1  → Runs on 🖥️ ubuntu-latest (Runner1)
+    │   ├── name: "Install & Build"
+    │   ├── runs-on: ubuntu-latest
+    │   ├── needs: []                              # Depends on other jobs (optional)
+    │   ├── if: github.ref == 'refs/heads/main'    # Job-level conditional (optional)
+    │   └── steps:
+    │       ├── ⚙️ Step1: uses: actions/checkout@v4
+    │       ├── ⚙️ Step2: uses: actions/setup-node@v4
+    │       ├── 🖊️ Step3: run: npm ci
+    │       └── 🖊️ Step4: run: npm run build
+    │
+    └── 🧩 job2  → Runs on 🖥️ ubuntu-latest (Runner2)
+        ├── name: "Test & Deploy"
+        ├── runs-on: ubuntu-latest
+        ├── needs: job1                             # This job runs only after job1
+        └── steps:
+            ├── 🖊️ Step1: run: npm test
+            ├── ⚙️ Step2: uses: actions/upload-artifact@v4
+            ├── 🖊️ Step3: run: echo "Deploying..."
+            └── ⚙️ Step4: uses: some/custom-action@v1
 ```
+
 
 A workflow must be defined in this folder structure within the repository.
 ```
@@ -64,13 +66,13 @@ Runners come in 2 flavours (Github-hosted runners or Self-hosted runners).
 ├── on:                                            # Triggering events
 │   ├── push:
 │   │   ├── branches: [main, release/*]            # Branch filters
-│   │   └── paths-ignore:                           # Ignore paths from triggering
+│   │   └── paths-ignore:                          # Ignore paths from triggering
 │   │       └── ["docs/**", "*.md"]
 │   ├── pull_request:
 │   │   ├── branches: [main]
 │   │   └── paths: ["src/**", "package.json"]
-│   └── workflow_dispatch                           # Manual trigger
-├── concurrency:                                    # Prevent parallel runs for the same ref
+│   └── workflow_dispatch                          # Manual trigger
+├── concurrency:                                   # Prevent parallel runs for the same ref
 │   ├── group: "ci-cd-${{ github.ref }}"           
 │   └── cancel-in-progress: true
 ├── permissions:                                   # Minimal permissions for workflow token
@@ -83,41 +85,43 @@ Runners come in 2 flavours (Github-hosted runners or Self-hosted runners).
 │       shell: bash
 │       working-directory: ./src
 │
-├── 🧩 Job1  → Runs on 🖥️ ubuntu-latest (Runner1)
-│   ├── name: "Install & Build"
-│   ├── runs-on: ubuntu-latest
-│   ├── timeout-minutes: 30                         # Job timeout
-│   ├── strategy:                                  # Matrix build example
-│   │   └── matrix:
-│   │       ├── node-version: [16.x, 18.x]
-│   │       └── os: [ubuntu-latest, windows-latest]
-│   ├── outputs:                                   # Outputs to pass to other jobs
-│   │   └── build_artifact_path: ${{ steps.build.outputs.artifact-path }}
-│   ├── steps:
-│   │   ├── ⚙️ Step1: uses: actions/checkout@v4
-│   │   ├── ⚙️ Step2: uses: actions/setup-node@v4
-│   │   ├── 🖊️ Step3: run: npm ci
-│   │   ├── 🖊️ Step4: id: build
-│   │   │           run: |
-│   │   │             npm run build
-│   │   │             echo "::set-output name=artifact-path::./build"
-│   │   └── ⚙️ Step5: uses: actions/upload-artifact@v3
-│   │               with:
-│   │                 name: build-artifact
-│   │                 path: ${{ steps.build.outputs.artifact-path }}
-│
-└── 🧩 Job2  → Runs on 🖥️ ubuntu-latest (Runner2)
-    ├── name: "Test & Deploy"
-    ├── runs-on: ubuntu-latest
-    ├── needs: Job1                                 # Depends on Job1
-    ├── if: github.ref == 'refs/heads/main'        # Conditional job run
-    ├── timeout-minutes: 20
-    ├── steps:
-    │   ├── 🖊️ Step1: run: npm test
-    │   ├── ⚙️ Step2: uses: actions/download-artifact@v3
-    │   │         with:
-    │   │           name: build-artifact
-    │   ├── 🖊️ Step3: run: echo "Deploying..."
-    │   └── ⚙️ Step4: uses: some/custom-action@v1
+└── jobs:                                          # 👈 Required parent key for all jobs
+    ├── 🧩 job1 → Runs on 🖥️ ubuntu-latest
+    │   ├── name: "Install & Build"
+    │   ├── runs-on: ubuntu-latest
+    │   ├── timeout-minutes: 30
+    │   ├── strategy:                              # Matrix build example
+    │   │   └── matrix:
+    │   │       ├── node-version: [16.x, 18.x]
+    │   │       └── os: [ubuntu-latest, windows-latest]
+    │   ├── outputs:                               # Pass outputs to downstream jobs
+    │   │   └── build_artifact_path: ${{ steps.build.outputs.artifact-path }}
+    │   └── steps:
+    │       ├── ⚙️ Step1: uses: actions/checkout@v4
+    │       ├── ⚙️ Step2: uses: actions/setup-node@v4
+    │       ├── 🖊️ Step3: run: npm ci
+    │       ├── 🖊️ Step4: id: build
+    │       │           run: |
+    │       │             npm run build
+    │       │             echo "::set-output name=artifact-path::./build"
+    │       └── ⚙️ Step5: uses: actions/upload-artifact@v3
+    │                   with:
+    │                     name: build-artifact
+    │                     path: ${{ steps.build.outputs.artifact-path }}
+    │
+    └── 🧩 job2 → Runs on 🖥️ ubuntu-latest
+        ├── name: "Test & Deploy"
+        ├── runs-on: ubuntu-latest
+        ├── needs: job1                             # Depends on job1
+        ├── if: github.ref == 'refs/heads/main'     # Conditional execution
+        ├── timeout-minutes: 20
+        └── steps:
+            ├── 🖊️ Step1: run: npm test
+            ├── ⚙️ Step2: uses: actions/download-artifact@v3
+            │         with:
+            │           name: build-artifact
+            ├── 🖊️ Step3: run: echo "Deploying..."
+            └── ⚙️ Step4: uses: some/custom-action@v1
 ```
+
 
