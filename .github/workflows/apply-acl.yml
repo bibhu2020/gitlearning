@@ -23,7 +23,7 @@ jobs:
 
       - name: Apply Access Control from acl.yaml
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_FOR_ACCESS_CONTROL }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python .github/access-control/apply_acl.py
