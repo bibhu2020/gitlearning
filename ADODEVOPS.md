@@ -1,0 +1,71 @@
+# Azure DevOps
+
+## Team (Azure DevOps Team)
+- A team is a collection of users from one or more security groups, as well as individual users.
+- Each team has at least one administrator who manages team settings and memberships.
+- A team's purpose is to organize and manage work including backlogs, sprints, and dashboards, and agile tools.
+- A team is a smaller, often cross-functional, group of people **within a project**.
+
+## Group (Azure DevOps Group)
+- A group is a security-focused entity that is used to grant or deny permissions for a set of users. It is the primary way to manage security and access control in Azure DevOps.
+- Purpose is to simplify the management of security permissions. You assign permissions to a group, and all members of that group inherit those permissions.
+- Can include individual users, other Azure DevOps groups, or Microsoft Entra ID (formerly Azure Active Directory) groups.
+- Groups exist at different scopes, such as the organization, project, or object level. A security group created for a team is scoped to the project.
+
+## Team vs Group
+- A team is focused agile entity for managing work.
+- A group is security-related entity for controlling permissions.
+- **Each team automatically creates a group to manage access**, but no all security groups are teams.
+- A team exists at a project scope only.
+- A group exists at different scopes, such as the organization, project, or object level.
+- A security group created for a team is scoped to the project. (group created automatically when a team is created)
+
+## Built-in Teams
+- A team is created with the same name as project when the project is created. (say, the project name is **dummy**, it creates a team called **dummy team**)
+- The default team's backlogs, boards, and dashboards are pre-configured, so you can immediately begin adding and tracking work items.
+
+## Built-in Groups (Project Level)
+- **Readers**: Users with view-only permissions, which allows them to see project information, code, and work items but not modify them
+- **Contributors**: The standard access group for most team members. Members can contribute fully to the project by creating and modifying work items, code, and other project artifacts. The default team is automatically added to this group.
+- **Project Administrators**:  Users with administrative permissions for the project, such as managing security, creating teams, and modifying project settings.
+- **Build Administrators**:  The primary purpose of this group is to delegate pipeline administration to specific users without giving them full project administrator privileges.
+- **dummy team**: This group is auto-created for the team **dummy team**.
+- **Project Valid Users**: This group contains every user who can access the project. **You cannot change its membership.**. All 4 groups listed above are the members of this group.
+
+## Built-in Groups (Org Level)
+- **Project Collection Administrators**: The highest level of permissions in the organization. Members can perform any operation and manage settings for the entire organization.
+- **Project Collection Build Administrators**: Manages all build and release resources across all projects within the entire organization or project collection.
+- **Project Collection Build Service Accounts**: A built-in security group that contains identities used by the build system to perform tasks on behalf of the organization. It is not for human users, but for service accounts that run automated processes, such as build and release pipelines.
+- **Project Collection Proxy Service Accounts**: a security group specifically for managing permissions related to the Azure DevOps Server Proxy. This is a feature used in on-premises deployments of Azure DevOps to cache Team Foundation Version Control (TFVC) files at a remote site, saving bandwidth for remote teams.
+- **Project Collection Service Accounts**: a built-in security group in Azure DevOps, and its primary purpose is to hold the service accounts that run the backend processes and services for an entire organization or project collection. It is not meant for human users.
+- **Project Collection Test Service Accounts:** a security group for automated testing services at the organization or project collection level. Its purpose is to manage permissions for service accounts that run automated tests, test agents, and test controllers in on-premises deployments.
+- **Project-Scoped Users**: used to dramatically limit a user's visibility and access within an organization, confining their view to only the projects they are explicitly added to.
+- **Security Service Group:** Identities which are granted explicit permission to a resource will be automatically added to this group if they were not previously a member of any other group.
+- **Project Collection Valid Users**: Like the project-level version, this group includes all other . Membership cannot be changed.
+
+
+# Add Users with Project Management Access only
+(users can only access workitems, backlog, etc..) but can't access repo, pipeline, etc...
+
+- Organization Settings > Security > Permissions.
+
+- Create a New Group (say, MXWEB-Non-V-IDs)
+
+- Go to Organization Settings > Users > Group Rules tab
+
+- Add a Group Rule
+
+- select the group created above (say, MXWEB-Non-V-IDs), and set Access Level to Stakeholder.
+
+- For Project access, select the specific project and set the role to Contributors. This will initially add them to the Contributor group, but their Stakeholder access level will limit their actual permissions to work items only.
+
+- Click Add
+
+- In Project Settings > Permissions, go to the Pipelines security settings.
+
+- Add the group MXWEB-Non-V-IDs
+
+- Set the view pipelines permission to deny.
+
+- Repeat the step for Security settings. 
+
