@@ -8,21 +8,28 @@
 
 ## Static Application Security Testing (SAST) tools in CI/CD
 
-SAST tools analyze **source code** or binaries to detect vulnerabilities **before runtime**.  
+SAST tools analyze **source code** or binaries to detect vulnerabilities **before runtime**.
 
 **Common SAST tools:**
-- **SonarQube**
-- **Snyk**
-- **CodeQL**
+
+* **SonarQube**
+* **Snyk**
+* **CodeQL**
 
 **Notes on CodeQL (used at Microsoft in ADO ecosystem):**
-- Detects security vulnerabilities and coding flaws by analyzing code as a database and performing query-based analysis.
-- Common issues detected:
-  - **Security Vulnerabilities:** SQL Injection, XSS, hard-coded secrets, authentication & authorization flaws
-  - **Code Quality Issues:** Memory leaks, unreachable code, use of deprecated functions
-  - **Logical and Performance Bugs:** Incorrect error handling, inefficient loops & queries
 
-> SonarQube also performs coding quality and standards checks, which CodeQL does not.
+* Detects security vulnerabilities and coding flaws by analyzing code as a database and performing query-based analysis.
+* Common issues detected:
+
+  * **Security Vulnerabilities:** SQL Injection, XSS, hard-coded secrets, authentication & authorization flaws
+  * **Code Quality Issues:** Memory leaks, unreachable code, use of deprecated functions
+  * **Logical and Performance Bugs:** Incorrect error handling, inefficient loops & queries
+
+> Many organizations use both: SonarQube for general quality and CodeQL for advanced security scanning, giving a complementary approach to SAST.
+> SonarQube does pattern matching file by file, whereas CodeQL treat the code as db records, and fire query to detect issues. It makes CodeQL more powerful to detect issues spanning to multiple files.
+> Example, you have QueryBuilder class which forumlates the query ["SELECT * FROM users WHERE username = '" + userInput + "'";]. There are multiple calling classes which is calling this builder class. SonarQube detects only the QueryBuilder class, CodeQL detects all calling classes so that you can change them to sanitize the SQL statement.
+> SonarQube advantages over CodeQL: It has 40+ language support, IDE plugin, and rich historical data
+
 
 ---
 
@@ -31,71 +38,164 @@ SAST tools analyze **source code** or binaries to detect vulnerabilities **befor
 DAST tools test **running applications** for vulnerabilities such as SQL injection, XSS, and authentication flaws.
 
 **Microsoft approach:**
-- DAST tools are **not integrated into CI/CD pipelines**.
-- Instead, a **centralized Web Scanning Tool / WCP Portal** is used for post-production security assessments:
-  - Registers applications for scanning after deployment
-  - Performs monthly scans for vulnerabilities (SQLi, XSS, authentication flaws)
-  - Reports security issues to development teams
-  - Conducts privacy reviews, including cookie scanning and data protection compliance
+
+* DAST tools are **not integrated into CI/CD pipelines**.
+* Instead, a **centralized Web Scanning Tool / WCP Portal** is used for post-production security assessments:
+
+  * Registers applications for scanning after deployment
+  * Performs monthly scans for vulnerabilities (SQLi, XSS, authentication flaws)
+  * Reports security issues to development teams
+  * Conducts privacy reviews, including cookie scanning and data protection compliance
+
+**Common DAST Tools (often missing in practice):**
+
+* **OWASP ZAP (Zed Attack Proxy)** – Open-source tool for detecting common web application vulnerabilities; ideal for automation in pipelines.
+* **Burp Suite** – Comprehensive DAST platform for web applications, offering both automated and manual security testing.
+* **Arachni** – Framework-based DAST scanner for Ruby, JavaScript, and web technologies.
+* **AppScan (HCL/AppScan Source)** – Enterprise-grade scanner that integrates into CI/CD for dynamic and interactive testing.
+* **Netsparker / Invicti** – Automated DAST platform that identifies vulnerabilities and provides proof-based scanning to reduce false positives.
+
+**Benefit:**
+Integrating one or more of these tools provides early visibility into runtime vulnerabilities and improves the feedback loop for developers — preventing costly security issues from reaching production.
 
 ---
 
 ## Software Composition Analysis (SCA)
 
-**SCA** is a security practice to identify and manage **vulnerabilities in open-source dependencies** within a project.  
-- Helps detect security flaws, license compliance issues, and outdated libraries.
-- Popular tools: **Snyk**, **GitHub Dependabot**
+**SCA** is a security practice to identify and manage **vulnerabilities in open-source dependencies** within a project.
+
+* Helps detect security flaws, license compliance issues, and outdated libraries.
+* Popular tools: **Snyk**, **GitHub Dependabot**
 
 ---
 
-## What is OWASP?
+## Infrastructure as Code (IaC) Security
 
-**OWASP** (Open Web Application Security Project) is a nonprofit organization focused on **improving software and web application security**.  
-- Provides free, open-source resources for application security.
-- Raises awareness about security risks in software development.
+As teams increasingly use **Infrastructure as Code (IaC)** tools such as **Terraform**, **Bicep**, and **ARM templates** to provision and configure cloud resources, securing infrastructure definitions becomes essential.
 
-**OWASP Top 10 (2021) includes:**
-1. Injection (e.g., SQL Injection)
-2. Broken Authentication
-3. Sensitive Data Exposure
-4. XML External Entities (XXE)
-5. Broken Access Control
-6. Security Misconfiguration
-7. Cross-Site Scripting (XSS)
-8. Insecure Deserialization
-9. Using Components with Known Vulnerabilities
-10. Insufficient Logging & Monitoring
+**IaC scanning** detects:
+
+* Open network ports or overly permissive security groups
+* Missing encryption on storage or databases
+* Unrestricted access policies and privilege escalations
+
+**Common IaC Security Tools:**
+
+* **Checkov** – Detects misconfigurations in Terraform, CloudFormation, and Kubernetes manifests
+* **Snyk IaC** – Identifies security issues early in pipelines
+* **Terraform Sentinel** – Enforces compliance via policy-as-code
+
+**Benefit:** Prevents cloud misconfigurations and enforces compliance **before deployment**.
 
 ---
 
-## Other DevSecOps Practices
+## Container and Image Security
 
-### Injecting tools into the pipeline
-- Integrate **SAST, DAST, SCA** tools directly into CI/CD pipelines.
-- Automated scans help detect vulnerabilities **before deployment**.
+Containerized environments introduce their own risks — vulnerabilities within images, misconfigured Dockerfiles, or embedded secrets can expose systems.
 
-### Preventing credential check-in into Git
-- Use **pre-commit hooks**, Git policies, and automated scanners to prevent secrets from being committed.
-- Tools: **GitGuardian, TruffleHog, Azure DevOps branch policies**.
+**Container scanning** helps detect:
+
+* Vulnerable OS packages or dependencies
+* Secrets or credentials baked into images
+* Insecure configurations or permissions
+
+**Popular Container Security Tools:**
+
+* **Trivy**
+* **Anchore**
+* **Clair**
+* **Snyk Container**
+
+**Benefit:** Ensures only secure and compliant images are promoted through CI/CD pipelines and deployed to Kubernetes or cloud registries.
+
+---
+
+## Secrets Management in DevSecOps
+
+Beyond preventing credential check-ins, DevSecOps emphasizes **secure storage, rotation, and access management of secrets**.
+
+**Best Practices:**
+
+* Store secrets in **Azure Key Vault**, **AWS Secrets Manager**, or **HashiCorp Vault**
+* Use **Managed Identities** instead of static credentials
+* Enforce automated secret rotation and access control policies
+
+**Supporting Tools:**
+
+* **GitGuardian** or **TruffleHog** for scanning repositories
+* **Azure DevOps Branch Policies** and pre-commit hooks to block credential leaks
+
+**Benefit:** Prevents sensitive data exposure and enforces consistent secret management practices.
+
+---
+
+## Continuous Monitoring and Security Posture Management
+
+Security doesn’t end after deployment. Continuous monitoring ensures that applications, infrastructure, and configurations remain secure and compliant in real time.
+
+**Key Tools and Practices:**
+
+* **Microsoft Defender for Cloud** and **Azure Security Center** for cloud workload protection
+* **AWS Security Hub** for centralized compliance reporting
+* **Falco** for runtime security in Kubernetes
+* **Prometheus + Grafana** for observability and anomaly detection
+
+**Benefit:** Provides ongoing visibility into security posture and ensures adherence to frameworks such as **CIS Benchmarks**, **ISO 27001**, or **NIST**.
+
+---
+
+## Threat Modeling and Shift-Left Security
+
+Security should be part of design discussions, not just testing. Threat modeling identifies potential risks before code is even written.
+
+**Practices:**
+
+* Conduct **threat modeling sessions** during design and architecture reviews
+* Apply frameworks like **Microsoft STRIDE** or **OWASP Threat Dragon**
+* Train teams to think about security implications early in SDLC
+
+**Benefit:** Reduces costly late-stage fixes and promotes a **shift-left** security mindset across the organization.
 
 ---
 
 ## Access Control in Azure DevOps (ADO)
 
 ### Organization Level
-- **All Users:** Add AAD users, give project access, and define access levels
-- **Group Rules:** Add AAD or DevOps groups to projects, define their access levels
-- **Access Levels:** Predefined sets of permissions
-- **Permissions:** Define group & user permissions for:
-  - Repos
-  - Pipelines
-  - Test plans
-  - Dashboards
-  - Policies
+
+* **All Users:** Add AAD users, give project access, and define access levels
+* **Group Rules:** Add AAD or DevOps groups to projects, define their access levels
+* **Access Levels:** Predefined sets of permissions
+* **Permissions:** Define group & user permissions for:
+
+  * Repos
+  * Pipelines
+  * Test plans
+  * Dashboards
+  * Policies
 
 ### Project Level
-- Access control at project scope allows finer control over repositories, pipelines, boards, test plans, and other resources.
-- You can manage **users, groups, roles, and permissions** specifically for each project.
+
+* Access control at project scope allows finer control over repositories, pipelines, boards, test plans, and other resources.
+* You can manage **users, groups, roles, and permissions** specifically for each project.
 
 ---
 
+## Summary
+
+A mature DevSecOps implementation integrates multiple layers of security throughout the software delivery lifecycle:
+
+| Security Layer            | Purpose                                     | Example Tools                           |
+| ------------------------- | ------------------------------------------- | --------------------------------------- |
+| **SAST**                  | Scan source code for vulnerabilities        | SonarQube, CodeQL                       |
+| **DAST**                  | Test running applications dynamically       | OWASP ZAP, Burp Suite, AppScan, Arachni |
+| **SCA**                   | Manage open-source dependencies             | Snyk, Dependabot                        |
+| **IaC Security**          | Detect misconfigurations in cloud templates | Checkov, Snyk IaC                       |
+| **Container Security**    | Scan container images for CVEs              | Trivy, Anchore                          |
+| **Secrets Management**    | Secure storage and rotation of credentials  | Azure Key Vault, TruffleHog             |
+| **Continuous Monitoring** | Runtime threat and compliance monitoring    | Defender for Cloud, Falco               |
+| **Threat Modeling**       | Identify risks early in design              | STRIDE, Threat Dragon                   |
+
+---
+
+✅ **In summary:**
+DevSecOps is not just about tools — it’s about embedding **security culture and automation** throughout the SDLC. By integrating these practices, organizations can deliver software that is **faster, safer, and more compliant** from code to cloud.
